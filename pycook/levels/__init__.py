@@ -1,4 +1,7 @@
 class BaseLevel:
+    def __init__(self):
+        self.run_kill = None
+        
     def init_killer(self):
         import stackless
         import pycook.sleep

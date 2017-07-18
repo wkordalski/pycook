@@ -1,3 +1,4 @@
+import collections
 import heapq
 from stackless import channel, schedule, tasklet, TaskletExit
 import threading
@@ -12,6 +13,9 @@ timepoints_queue = []
 conditions_lock = threading.Lock()
 conditions_counter = 0
 conditions_dict = {}
+
+channels_lock = threading.RLock()
+channels_send = collections.deque()
 
 command_processor_tasklet = None
 alarm_tasklet = None
@@ -45,6 +49,14 @@ def alarm_task():
             if cond():
                 del conditions_dict[k]
                 chan.send(None)
+
+        with channels_lock:
+            while len(channels_send) > 0:
+                (chan, data) = channels_send.pop()
+                
+                def sender():
+                    chan.send(data)
+                tasklet(sender)()
 
         # TODO: if there are other tasklets - 
         # schedule - remember to keep the time
@@ -91,7 +103,14 @@ def wait_for_signal(trigger_placer):
         raise
 
 
+def send_channel(channel, data):
+    print("SEND CHANNEL")
+    with channels_lock:
+        channels_send.append((channel, data))
+
+
 def init():
+    print("SLEEP INIT")
     global command_processor_tasklet, alarm_tasklet
     command_processor_tasklet = tasklet(
         command_processor_task, label='sleep_command_processor_task'

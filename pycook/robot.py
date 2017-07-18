@@ -1,9 +1,12 @@
 import math
 import pygame
 
+import pycook.collision
+
 
 class Robot:
-    def __init__(self, position):
+    def __init__(self, id, position):
+        self.id = id
         self.x = position[0]
         self.y = position[1]
         self.r = 00
@@ -13,6 +16,10 @@ class Robot:
         self.vr = 0.2
         self.target_reach = None
         self.image = pygame.image.load('images/ball.png')
+
+    @property
+    def type(self):
+        return "robot"
 
     def draw(self, game):
         rimg = pygame.transform.rotate(self.image, self.r)
@@ -73,3 +80,10 @@ class Robot:
             self.tm = distance
             self.target_reach = trigger
         pycook.sleep.wait_for_signal(setter)
+
+    @property
+    def collision(self):
+        # return pycook.collision.Circle(0, 0, 30).move(self.x, self.y)
+        return pycook.collision.Polygon(
+            [(0, -25), (-25, 25), (25, 25)]
+        ).rotate(self.r).move(self.x, self.y)
